@@ -1,6 +1,20 @@
-use libc::{c_char, c_int};
+use libc::{c_char, c_int, c_void};
 
 use crate::context::GPContext;
+
+/// Object representing a camera attached to the system.
+///
+/// A Camera object represents a specific instance of a (physical of
+/// virtual) camera attached to the system.
+///
+/// The abilities of this type of camera are stored in a CameraAbility
+/// object.
+///
+/// The details of the Camera object are internal.
+#[repr(C)]
+pub struct Camera {
+    __private: c_void,
+}
 
 /// CameraText structure used in various functions.
 ///
@@ -74,3 +88,20 @@ pub enum CameraEventType {
 /// Implement this function if you need to any of this stuff, otherwise leave
 /// it out.
 pub type CameraExitFunc = extern "C" fn(camera: *mut Camera, context: *mut GPContext) -> c_int;
+
+extern "C" {
+    pub fn gp_camera_file_get_info(camera: *mut Camera) -> c_int;
+    pub fn gp_camera_file_set_info(camera: *mut Camera) -> c_int;
+    pub fn gp_camera_file_get(camera: *mut Camera) -> c_int;
+    pub fn gp_camera_file_read(camera: *mut Camera) -> c_int;
+    pub fn gp_camera_file_delete(
+        camera: *mut Camera,
+        folder: *const c_char,
+        file: *const c_char,
+        context: *mut GPContext,
+    ) -> c_int;
+
+    pub fn gp_camera_set_timeout_funcs();
+    pub fn gp_camera_start_timeout();
+    pub fn gp_camera_stop_timeout();
+}
