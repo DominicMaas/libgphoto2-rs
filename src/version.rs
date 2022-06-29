@@ -8,5 +8,5 @@ pub enum GPVersionVerbosity {
 }
 
 extern "C" {
-    pub fn gp_library_version() -> *const *const c_char;
+    pub fn gp_library_version(verbose: GPVersionVerbosity) -> *const *const c_char;
 }

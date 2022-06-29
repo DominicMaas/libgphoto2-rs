@@ -1,6 +1,12 @@
-use libc::{c_char, c_int, c_void};
+use libc::{c_char, c_int, c_uint, c_void};
 
-use crate::context::GPContext;
+use crate::{
+    abilities_list::CameraAbilities,
+    context::GPContext,
+    file::{CameraFile, CameraFileType},
+    list::CameraList,
+    widget::CameraWidget,
+};
 
 /// Object representing a camera attached to the system.
 ///
@@ -89,11 +95,202 @@ pub enum CameraEventType {
 /// it out.
 pub type CameraExitFunc = extern "C" fn(camera: *mut Camera, context: *mut GPContext) -> c_int;
 
+/// Get a configuration tree for the camera and its driver
+///
+/// A camera driver can support configuration of either its own behaviour
+/// or the camera device itself. To allow a flexible driver framework,
+/// the camera driver provides a generic configuration widget tree to the
+/// frontend, which then renders it, allows user input and sends it back
+/// via the #CameraSetConfigFunc function to have the driver configure itself
+/// or the camera.
+///
+/// If you do not have configuration ability, there is no need to specify this
+/// function.
+pub type CameraGetConfigFunc = extern "C" fn(
+    camera: *mut Camera,
+    widget: *mut *mut CameraWidget,
+    context: *mut GPContext,
+) -> c_int;
+
+pub type CameraTimeoutFunc = extern "C" fn(camera: *mut Camera, context: *mut GPContext) -> c_int;
+
+pub type CameraTimeoutStartFunc = extern "C" fn(
+    camera: *mut Camera,
+    timeout: c_uint,
+    func: CameraTimeoutFunc,
+    data: *mut c_void,
+) -> c_uint;
+
+pub type CameraTimeoutStopFunc = extern "C" fn(camera: *mut Camera, id: c_uint, data: *mut c_void);
+
 extern "C" {
-    pub fn gp_camera_file_get_info(camera: *mut Camera) -> c_int;
-    pub fn gp_camera_file_set_info(camera: *mut Camera) -> c_int;
-    pub fn gp_camera_file_get(camera: *mut Camera) -> c_int;
-    pub fn gp_camera_file_read(camera: *mut Camera) -> c_int;
+    pub fn gp_camera_new(camera: *mut *mut Camera) -> c_int;
+
+    // Preparing initialization//
+
+    pub fn gp_camera_set_abilities(camera: *mut Camera, abilities: CameraAbilities) -> c_int;
+    pub fn gp_camera_get_abilities(camera: *mut Camera, abilities: *mut CameraAbilities) -> c_int;
+    pub fn gp_camera_set_port_info(camera: *mut Camera, info: GPPortInfo) -> c_int;
+    pub fn gp_camera_get_port_info(camera: *mut Camera, info: *mut GPPortInfo) -> c_int;
+
+    // Camera speed //
+
+    pub fn gp_camera_get_port_speed(camera: *mut Camera) -> c_int;
+    pub fn gp_camera_set_port_speed(camera: *mut Camera, speed: c_int) -> c_int;
+
+    // Initialization //
+
+    pub fn gp_camera_autodetect(list: *mut CameraList, context: *mut GPContext) -> c_int;
+    pub fn gp_camera_init(camera: *mut Camera, context: *mut GPContext) -> c_int;
+    pub fn gp_camera_exit(camera: *mut Camera, context: *mut GPContext) -> c_int;
+
+    // Operations on cameras //
+
+    pub fn gp_camera_ref(camera: *mut Camera) -> c_int;
+    pub fn gp_camera_unref(camera: *mut Camera) -> c_int;
+    pub fn gp_camera_free(camera: *mut Camera) -> c_int;
+    pub fn gp_camera_list_config(
+        camera: *mut Camera,
+        list: *mut CameraList,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_get_config(
+        camera: *mut Camera,
+        window: *mut *mut CameraWidget,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_set_config(
+        camera: *mut Camera,
+        window: *mut CameraWidget,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_get_single_config(
+        camera: *mut Camera,
+        name: *const c_char,
+        widget: *mut *mut CameraWidget,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_set_single_config(
+        camera: *mut Camera,
+        name: *const c_char,
+        widget: *mut CameraWidget,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_get_summary(
+        camera: *mut Camera,
+        summary: *mut CameraText,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_get_manual(
+        camera: *mut Camera,
+        manual: *mut CameraText,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_get_about(
+        camera: *mut Camera,
+        about: *mut CameraText,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_capture(
+        camera: *mut Camera,
+        capture_type: CameraCaptureType,
+        path: *mut CameraFilePath,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_trigger_capture(camera: *mut Camera, context: *mut GPContext) -> c_int;
+    pub fn gp_camera_capture_preview(
+        camera: *mut Camera,
+        file: *mut CameraFile,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_wait_for_event(
+        camera: *mut Camera,
+        timeout: c_int,
+        eventtype: *mut CameraEventType,
+        eventdata: *mut *mut c_void,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_get_storageinfo(
+        camera: *mut Camera,
+        sifs: *mut *mut CameraStorageInformation,
+        nrofsifs: *mut c_int,
+        context: *mut GPContext,
+    ) -> c_int;
+
+    // Operations on folders //
+
+    pub fn gp_camera_folder_list_files(
+        camera: *mut Camera,
+        folder: *const c_char,
+        list: *mut CameraList,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_folder_list_folders(
+        camera: *mut Camera,
+        folder: *const c_char,
+        list: *mut CameraList,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_folder_delete_all(
+        camera: *mut Camera,
+        folder: *const c_char,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_folder_put_file(
+        camera: *mut Camera,
+        folder: *const c_char,
+        filename: *const c_char,
+        file_type: CameraFileType,
+        file: *mut CameraFile,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_folder_make_dir(
+        camera: *mut Camera,
+        folder: *const c_char,
+        name: *const c_char,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_folder_remove_dir(
+        camera: *mut Camera,
+        folder: *const c_char,
+        name: *const c_char,
+        context: *mut GPContext,
+    ) -> c_int;
+
+    // Operations on files //
+
+    pub fn gp_camera_file_get_info(
+        camera: *mut Camera,
+        folder: *const c_char,
+        file: *const c_char,
+        info: *mut CameraFileInfo,
+        contest: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_file_set_info(
+        camera: *mut Camera,
+        folder: *const c_char,
+        file: *const c_char,
+        info: CameraFileInfo,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_file_get(
+        camera: *mut Camera,
+        folder: *const c_char,
+        file: *const c_char,
+        file_type: CameraFileType,
+        camera_file: *mut CameraFile,
+        context: *mut GPContext,
+    ) -> c_int;
+    pub fn gp_camera_file_read(
+        camera: *mut Camera,
+        folder: *const c_char,
+        file: *const c_char,
+        file_type: CameraFileType,
+        offset: u64,
+        buf: *mut c_char,
+        size: *mut u64,
+        context: *mut GPContext,
+    ) -> c_int;
     pub fn gp_camera_file_delete(
         camera: *mut Camera,
         folder: *const c_char,
@@ -101,7 +298,18 @@ extern "C" {
         context: *mut GPContext,
     ) -> c_int;
 
-    pub fn gp_camera_set_timeout_funcs();
-    pub fn gp_camera_start_timeout();
-    pub fn gp_camera_stop_timeout();
+    // Some cameras need 'keep-alive-messages' //
+
+    pub fn gp_camera_set_timeout_funcs(
+        camera: *mut Camera,
+        start_func: CameraTimeoutStartFunc,
+        stop_func: CameraTimeoutStopFunc,
+        data: *mut c_void,
+    );
+    pub fn gp_camera_start_timeout(
+        camera: *mut Camera,
+        timeout: c_uint,
+        func: CameraTimeoutFunc,
+    ) -> c_int;
+    pub fn gp_camera_stop_timeout(camera: *mut Camera, id: c_uint);
 }
