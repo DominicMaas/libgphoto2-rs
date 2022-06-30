@@ -1,5 +1,7 @@
 // libgphoto2_port/gphoto2/gphoto2-port-info-list.h
 
+use libc::c_void;
+
 /// The gphoto port type.
 ///
 /// Enumeration specifying the port type.
@@ -24,4 +26,30 @@ pub enum GPPortType {
     GP_PORT_USB_SCSI = 1 << 6,
     /// Generic IP address port.
     GP_PORT_IP = 1 << 7,
+}
+
+/// Information about the current port.
+///
+/// Specific information about the current port. Usually taken from the
+/// "--port=XXXX" setting from the frontend.
+///
+/// This is not to be confused with the driver configurable port settings
+/// in \ref GPPortSettings.
+#[repr(C)]
+pub struct _GPPortInfo {
+    __private: c_void,
+}
+
+/// Information about the current port.
+///
+/// Specific information about the current port. Usually taken from the
+/// "--port=XXXX" setting from the frontend.
+///
+/// This is not to be confused with the driver configurable port settings
+/// in \ref GPPortSettings.
+pub type GPPortInfo = *mut _GPPortInfo;
+
+#[repr(C)]
+pub struct GPPortInfoList {
+    __private: c_void,
 }

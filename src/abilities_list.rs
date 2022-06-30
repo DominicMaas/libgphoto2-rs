@@ -1,6 +1,10 @@
 use libc::{c_char, c_int, c_void};
 
-use crate::{context::GPContext, list::CameraList, port_info_list::GPPortType};
+use crate::{
+    context::GPContext,
+    list::CameraList,
+    port_info_list::{GPPortInfoList, GPPortType},
+};
 
 /// Current implementation status of the camera driver.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]

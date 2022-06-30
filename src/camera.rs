@@ -4,7 +4,9 @@ use crate::{
     abilities_list::CameraAbilities,
     context::GPContext,
     file::{CameraFile, CameraFileType},
+    filesys::{CameraFileInfo, CameraStorageInformation},
     list::CameraList,
+    port_info_list::GPPortInfo,
     widget::CameraWidget,
 };
 
@@ -112,6 +114,29 @@ pub type CameraGetConfigFunc = extern "C" fn(
     context: *mut GPContext,
 ) -> c_int;
 
+/// Get a configuration widget for a specific configuration
+///
+/// A camera driver can support configuration of either its own behaviour
+/// or the camera device itself. To allow a flexible driver framework,
+/// the camera driver provides a generic configuration widget tree to the
+/// frontend, which then renders it, allows user input and sends it back
+/// via the #CameraSetConfigFunc function to have the driver configure itself
+/// or the camera.
+///
+/// This specific function retrieves one specific named entry, and not the full
+/// tree to allow for querying specific settings faster.
+///
+/// If you do not have configuration ability, there is no need to specify this
+/// function.
+pub type CameraGetSingleConfigFunc = extern "C" fn(
+    camera: *mut Camera,
+    name: *const c_char,
+    widget: *mut *mut CameraWidget,
+    context: *mut GPContext,
+) -> c_int;
+
+// ---- //
+
 pub type CameraTimeoutFunc = extern "C" fn(camera: *mut Camera, context: *mut GPContext) -> c_int;
 
 pub type CameraTimeoutStartFunc = extern "C" fn(
@@ -122,6 +147,16 @@ pub type CameraTimeoutStartFunc = extern "C" fn(
 ) -> c_uint;
 
 pub type CameraTimeoutStopFunc = extern "C" fn(camera: *mut Camera, id: c_uint, data: *mut c_void);
+
+#[repr(C)]
+pub struct CameraPrivateLibrary {
+    __private: c_void,
+}
+
+#[repr(C)]
+pub struct CameraPrivateCore {
+    __private: c_void,
+}
 
 extern "C" {
     pub fn gp_camera_new(camera: *mut *mut Camera) -> c_int;
